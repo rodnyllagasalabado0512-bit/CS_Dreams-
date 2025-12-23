@@ -1,0 +1,311 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block content %}
+<div id="homeWrapper" class="home-wrapper" style="min-height:100vh; padding-top:64px;">
+
+  <div id="musicPlayer" class="music-player">
+    <div class="mp-emoji">🎧💗</div>
+    <h3 class="mp-title">Music Player</h3>
+    <label class="mp-upload-btn" for="musicUpload">➕ Upload MP3</label>
+    <input id="musicUpload" type="file" accept="audio/*" style="display:none" />
+    <div id="nowPlaying" class="mp-nowplaying" style="display:none"></div>
+    <audio id="audioPlayer" preload="metadata"></audio>
+    <div class="mp-controls">
+      <button id="prevBtn" class="btn small">⏮</button>
+      <button id="playBtn" class="btn small">▶️</button>
+      <button id="nextBtn" class="btn small">⏭</button>
+    </div>
+    <div class="mp-row">
+      <div class="time-col">
+        <label>🎶 Time</label>
+        <input id="seek" type="range" min="0" max="100" value="0" />
+        <div class="time-labels"><span id="curTime">00:00</span><span id="durTime">00:00</span></div>
+      </div>
+      <div class="vol-col">
+        <label>🔊</label>
+        <div class="vol-buttons">
+          <button id="volDown" class="btn tiny">−</button>
+          <button id="volUp" class="btn tiny">+</button>
+        </div>
+        <div id="volPct" class="vol-pct">100%</div>
+      </div>
+    </div>
+    <button id="openPlaylist" class="btn small playlist-open">🎀 Playlist</button>
+  </div>
+
+  <div id="playlistModal" class="modal hidden">
+    <div class="modal-backdrop" id="playlistClose"></div>
+    <div class="modal-card">
+      <h3>🎀 My Playlist</h3>
+      <button class="modal-close btn small" id="closePlaylist">✖</button>
+      <input id="playlistSearch" type="text" placeholder="🔍 Search song..." />
+      <div id="playlistList" class="playlist-list"></div>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <div class="profile-wrapper">
+      <div class="profile-card-large">
+        <div class="profile-side-hearts left">
+          <span>💗</span><span>💗</span><span>💗</span><span>💗</span><span>💗</span>
+        </div>
+        <div class="profile-inner">
+          <div class="pc-left">
+            <div id="profileLeftBox" class="pc-left-inner dotted-box"
+                 data-full_name="{{ profile.full_name|default:''|escapejs }}"
+                 data-age="{{ profile.age|default:'' }}"
+                 data-birthday="{{ profile.birthday|default:'' }}"
+                 data-gender="{{ profile.gender|default:''|escapejs }}"
+                 data-location="{{ profile.location|default:''|escapejs }}"
+                 data-favorites="{{ profile.favorites|default:''|escapejs }}"
+                 data-life_status="{{ profile.life_status|default:''|escapejs }}"
+                 data-bio="{{ profile.bio|default:''|escapejs }}">
+              <div class="pc-title">Profile Picture</div>
+              {% if profile.image %}
+                <img id="profileImageDisplay" src="{{ profile.image.url }}" alt="Profile" class="pc-image-round" />
+              {% else %}
+                <div id="profileImageDisplay" class="pc-image-round placeholder">No image</div>
+              {% endif %}
+              <div class="pc-bio-box">
+                <div id="profileBioText" class="pc-bio-text">{{ profile.bio|default:"Tell the world a little about yourself…" }}</div>
+              </div>
+              <div class="pc-left-form">
+                <button type="button" id="openEditProfileBtn" class="btn edit-btn">✏️ Edit Profile</button>
+              </div>
+            </div>
+          </div>
+          <div class="pc-right">
+            <div class="pc-right-header">
+              <div class="pc-header-left">🌸 Your Profile</div>
+              <div class="pc-header-decor">🌸</div>
+            </div>
+            <div id="pcDetails" class="pc-details">
+              <div class="detail-row"><div class="label">USERNAME:</div><div id="val_username" class="value">{{ request.user.username }}</div></div>
+              <div class="detail-row"><div class="label">FULL NAME:</div><div id="val_full_name" class="value">{{ profile.full_name }}</div></div>
+              <div class="detail-row"><div class="label">AGE:</div><div id="val_age" class="value">{{ profile.age }}</div></div>
+              <div class="detail-row"><div class="label">BIRTHDAY:</div><div id="val_birthday" class="value">{{ profile.birthday }}</div></div>
+              <div class="detail-row"><div class="label">GENDER:</div><div id="val_gender" class="value">{{ profile.gender }}</div></div>
+              <div class="detail-row"><div class="label">LOCATION:</div><div id="val_location" class="value">{{ profile.location }}</div></div>
+              <div class="detail-row"><div class="label">FAVORITES:</div><div id="val_favorites" class="value">{{ profile.favorites }}</div></div>
+              <div class="detail-row"><div class="label">LIFE STATUS:</div><div id="val_life_status" class="value">{{ profile.life_status }}</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="profile-side-hearts right">
+          <span>💗</span><span>💗</span><span>💗</span><span>💗</span><span>💗</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="album-section">
+      <div id="albumsContainer" class="album-banner" role="region" aria-label="Photo Album" style="font-size: 1.3rem; font-weight: bold;">
+        <div class="album-banner-inner">
+          <div class="banner-top">
+            <div class="banner-left"></div>
+            <div class="banner-title"></div>
+            <div class="banner-right"></div>
+          </div>
+          <div class="banner-body"></div>
+        </div>
+      </div>
+
+      <form id="uploadPhotoForm" method="post" action="{% url 'upload_photo' %}" enctype="multipart/form-data" class="upload-photo" style="margin-top:16px;">
+        {% csrf_token %}
+        <div class="upload-controls hidden" id="uploadControls">
+          <input id="uploadPhotoInput" type="file" name="image" accept="image/*" style="display:none" />
+          <select id="uploadAlbumSelect" name="album_id">
+            <option value="">(No Album)</option>
+            {% for alb in albums %}
+              <option value="{{ alb.id }}">{{ alb.name }}</option>
+            {% endfor %}
+          </select>
+          <button id="uploadPhotoBtn" class="btn small" type="button">➕ Upload Photo</button>
+        </div>
+      </form>
+
+      <div id="photosGrid" class="photos-grid" style="margin-top:14px;">
+        {% if photos %}
+          {% for photo in photos %}
+            <div class="photo-card" data-photo-id="{{ photo.id }}">
+              <img src="{{ photo.image.url }}" alt="photo" />
+              <div class="photo-actions" style="position:absolute;left:8px;bottom:8px;display:flex;gap:6px;">
+                <button class="btn tiny view-photo-btn" data-image-url="{{ photo.image.url }}">🔍</button>
+                <button class="btn tiny delete-photo-btn" data-photo-id="{{ photo.id }}">✖</button>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="muted">No photos yet. Add an album in "My Albums" and upload a photo 💗</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="post-feed">
+      <h2>💬 Post Feed</h2>
+      <div class="create-post-inline" style="margin-bottom:12px;">
+        <button id="openCreatePostBtn" class="btn">➕ New Post</button>
+      </div>
+      <div id="postsContainer" class="posts">
+        {% for post in posts %}
+          <div class="post-card" data-post-id="{{ post.id }}">
+            <div class="post-top">
+              <strong class="post-name">{{ post.user.username }}</strong>
+              <div class="post-time">{{ post.created_at }}</div>
+            </div>
+            <div class="post-body" id="post-body-{{ post.id }}">{{ post.content }}</div>
+            {% if post.image %}
+              <img src="{{ post.image.url }}" class="post-image" />
+            {% endif %}
+            <div class="post-actions">
+              <button class="btn tiny ajax-like-btn" data-post-id="{{ post.id }}">❤️ <span class="likes-count">{{ post.likes.count }}</span></button>
+              <button class="btn tiny comment-toggle" data-id="{{ post.id }}">💬 Comments ({{ post.comments.count }})</button>
+              {% if post.user == request.user %}
+                <button class="btn tiny ajax-edit-post-btn" data-post-id="{{ post.id }}" data-content="{{ post.content|escapejs }}">✏ Edit</button>
+                <button class="btn tiny ajax-delete-post-btn" data-post-id="{{ post.id }}">✖ Delete</button>
+              {% endif %}
+            </div>
+            <div id="comments-{{ post.id }}" class="comments-area hidden">
+              <form class="add-comment-ajax" data-post-id="{{ post.id }}" style="margin-bottom:15px;">
+                {% csrf_token %}
+                <input name="text" placeholder="Write a comment..." />
+                <button class="btn tiny" type="button">💬</button>
+              </form>
+              <div class="comment-list" style="display: flex; flex-direction: column; gap: 10px;">
+                {% for comment in post.comments.all %}
+                  <div class="comment-item" data-comment-id="{{ comment.id }}" 
+                       style="background-color: rgba(255, 182, 205, 0.15); 
+                              border: 1px solid rgba(255, 116, 164, 0.3); 
+                              border-radius: 12px; 
+                              padding: 12px; 
+                              position: relative;">
+                    <div class="comment-content">
+                      <div class="comment-row" style="margin-bottom: 4px;">
+                        <strong style="color: #ff4d8d; font-size: 0.85rem; text-transform: uppercase;">User:</strong> 
+                        <span class="c-name" style="font-weight: 600;">{{ comment.user.get_full_name|default:comment.user.username }}</span>
+                      </div>
+                      <div class="comment-row" style="margin-bottom: 4px;">
+                        <strong style="color: #ff4d8d; font-size: 0.85rem; text-transform: uppercase;">Date:</strong> 
+                        <span class="c-time" style="font-size: 0.8rem; color: #666;">{{ comment.created_at }}</span>
+                      </div>
+                      <div class="comment-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 116, 164, 0.1);">
+                        <strong style="color: #ff4d8d; font-size: 0.85rem; text-transform: uppercase;">Comment:</strong> 
+                        <div class="c-text" style="margin-top: 2px; line-height: 1.4;">{{ comment.text }}</div>
+                      </div>
+                    </div>
+                    {% if comment.user == request.user or post.user == request.user %}
+                      <button class="btn tiny ajax-delete-comment-btn" data-comment-id="{{ comment.id }}" 
+                              style="position: absolute; top: 8px; right: 8px; background: none; border: none; cursor: pointer; padding: 0;">❌</button>
+                    {% endif %}
+                  </div>
+                {% empty %}
+                  <div class="muted">No comments yet.</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="muted">No posts yet 💗</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div id="editProfileModal" class="modal hidden">
+    <div class="modal-backdrop" id="editProfileBackdrop"></div>
+    <div class="modal-card">
+      <h3>Edit Profile</h3>
+      <button class="modal-close btn small" id="closeEditProfileBtn">✖</button>
+      <form id="editProfileForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="display:grid; gap:8px;">
+          <input id="edit_full_name" name="full_name" placeholder="Full name" />
+          <input id="edit_age" name="age" type="number" placeholder="Age" />
+          <input id="edit_birthday" name="birthday" type="date" />
+          <select id="edit_gender" name="gender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <input id="edit_location" name="location" placeholder="Location" />
+          <input id="edit_favorites" name="favorites" placeholder="Favorites" />
+          <select id="edit_life_status" name="life_status">
+            <option value="">Life Status</option><option>Elementary</option><option>High School</option><option>College</option><option>Working</option><option>Tambay</option>
+          </select>
+          <textarea id="edit_bio" name="bio" rows="3" placeholder="Bio…"></textarea>
+          <label class="btn small">📷 Choose Photo
+            <input id="edit_image_input" name="image" type="file" accept="image/*" style="display:none" />
+          </label>
+          <img id="edit_image_preview" src="" alt="preview" style="width:80px; height:80px; object-fit:cover; border-radius:8px; display:none; border:2px solid rgba(255,182,205,0.7)" />
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="submitEditProfileBtn" type="button" class="btn">💾 Save Changes</button>
+            <button id="cancelEditProfileBtn" type="button" class="btn small" style="background:#6b6b6b">✖ Cancel</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="addAlbumModal" class="modal hidden">
+    <div class="modal-backdrop" id="addAlbumModalBackdrop"></div>
+    <div class="modal-card">
+      <h3>➕ Add Album</h3>
+      <button class="modal-close btn small" id="closeAddAlbumModal">✖</button>
+      <div style="display:grid; gap:8px;">
+        <input id="addAlbumNameInput" type="text" placeholder="Album name..." />
+        <div style="display:flex; gap:8px;">
+          <button id="createAddAlbumBtn" class="btn small">Create Album</button>
+          <button class="btn small outline" type="button" onclick="document.getElementById('addAlbumModal')?.classList.add('hidden')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="myAlbumsModal" class="modal hidden">
+    <div class="modal-backdrop" id="myAlbumsModalBackdrop"></div>
+    <div class="modal-card" style="max-width:520px;">
+      <h3>❤️ My Albums</h3>
+      <button class="modal-close btn small" id="closeMyAlbumsModal">✖</button>
+      <div style="display:grid; gap:8px;">
+        <div style="display:flex; gap:8px;">
+          <button id="refreshMyAlbumsBtn" class="btn small">↻ Refresh</button>
+        </div>
+        <div id="myAlbumsListAjax" style="max-height:320px; overflow:auto; margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="photoViewerModal" class="modal hidden">
+    <div class="modal-backdrop" id="photoViewerBackdrop"></div>
+    <div class="modal-card" style="width:640px;">
+      <button class="modal-close btn small" id="closePhotoViewer">✖</button>
+      <div style="text-align:center;">
+        <img id="photoViewerImage" src="" alt="photo" style="max-width:100%; border-radius:12px;" />
+      </div>
+    </div>
+  </div>
+
+  <div id="postModal" class="modal hidden">
+    <div class="modal-backdrop" id="postModalBackdrop"></div>
+    <div class="modal-card" style="width:520px;">
+      <h3 id="postModalTitle">New Post</h3>
+      <button class="modal-close btn small" id="closePostModal">✖</button>
+      <form id="postForm" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" id="post_id_field" name="post_id" value="" />
+        <textarea id="post_content_field" name="content" rows="4" placeholder="Write your post..."></textarea>
+        <label class="btn small">📷 Add Image
+          <input id="post_image_input" name="image" type="file" accept="image/*" style="display:none" />
+        </label>
+        <img id="post_image_preview" src="" alt="" style="max-width:160px; display:none; border-radius:8px; margin-top:8px;" />
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button id="savePostBtn" type="button" class="btn">💾 Post</button>
+          <button id="cancelPostBtn" type="button" class="btn small" style="background:#6b6b6b">✖ Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

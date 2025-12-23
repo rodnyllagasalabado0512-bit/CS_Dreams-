@@ -1,0 +1,166 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kyutaku</title>
+  <link rel="stylesheet" href="{% static 'css/kyutaku.css' %}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="nav-hearts" aria-hidden>
+      <span class="heart" style="left:6%; animation-delay:0s; color:#ffb3d6">💗</span>
+      <span class="heart" style="left:18%; animation-delay:0.6s; font-size:20px; color:#ff4fa8">💖</span>
+      <span class="heart" style="left:30%; animation-delay:1.2s; color:#ffd0e8">💕</span>
+      <span class="heart" style="left:46%; animation-delay:0.3s; font-size:16px; color:#ffb3d6">💗</span>
+      <span class="heart" style="left:62%; animation-delay:1s; color:#ff4fa8">💞</span>
+      <span class="heart" style="left:78%; animation-delay:0.4s; font-size:20px; color:#ffd0e8">💗</span>
+    </div>
+
+    <div class="topbar-left">
+      <img src="{% static 'img/logo.png' %}" alt="logo" class="topbar-logo" onerror="this.style.display='none'">
+      <div class="brand">CS_Dreams°૨</div>
+    </div>
+
+    <div class="topbar-right">
+      {% if user.is_authenticated %}
+        <div class="top-username">Hi, {{ user.username }}</div>
+        <button id="menuToggle" class="menu-btn">☰</button>
+      {% else %}
+        <a href="{% url 'login' %}" class="link">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <aside id="sideMenu" class="side-menu" aria-hidden="true">
+    <div class="side-inner">
+      <div class="side-header">
+        <h4>🎨 Appearance</h4>
+        <button id="closeSide" aria-label="Close side menu" class="side-close">✖</button>
+      </div>
+
+      <div class="side-section">
+        <div class="side-section-title">Background</div>
+        <div class="field-row">
+          <label class="field-label">Page</label>
+          <input id="bgColorInput" type="color" />
+        </div>
+
+        <div class="field-row">
+          <label class="field-label">Image</label>
+
+          <!-- Hidden file input (kept for JS handling) -->
+          <input id="bgImageInput" type="file" accept="image/*" style="display:none" />
+
+          <!-- Visible upload button replaces the native "choose file" control -->
+          <button id="bgImageUploadBtn" class="btn small">Upload Image</button>
+
+          <!-- optional place to show chosen filename -->
+          <span id="bgImageName" style="margin-left:8px; font-size:0.86rem; color:#ffb3d6;"></span>
+        </div>
+
+        <div class="field-row">
+          <button id="resetBg" class="btn small outline">Reset Background</button>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="side-section">
+        <div class="side-section-title">Containers</div>
+
+        <div class="color-row">
+          <div class="color-info">
+            <div class="color-label">Music</div>
+            <input id="musicColorInput" type="color" />
+          </div>
+          <div class="color-actions">
+            <button id="resetMusicColorBtn" class="btn tiny outline">Reset</button>
+          </div>
+        </div>
+
+        <div class="color-row">
+          <div class="color-info">
+            <div class="color-label">Profile</div>
+            <input id="profileColorInput" type="color" />
+          </div>
+          <div class="color-actions">
+            <button id="resetProfileColorBtn" class="btn tiny outline">Reset</button>
+          </div>
+        </div>
+
+        <div class="color-row">
+          <div class="color-info">
+            <div class="color-label">Album</div>
+            <input id="albumColorInput" type="color" />
+          </div>
+          <div class="color-actions">
+            <button id="resetAlbumColorBtn" class="btn tiny outline">Reset</button>
+          </div>
+        </div>
+
+        <div class="color-row">
+          <div class="color-info">
+            <div class="color-label">Posts</div>
+            <input id="postColorInput" type="color" />
+          </div>
+          <div class="color-actions">
+            <button id="resetPostColorBtn" class="btn tiny outline">Reset</button>
+          </div>
+        </div>
+
+      </div>
+
+      <hr />
+
+      <div class="side-footer">
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn wide">🔓 Logout</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <main id="pageRoot" class="page-root">
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+  // Small inline helper to make the visible Upload button trigger the hidden file input
+  // and show the selected filename. This complements the existing bgImageInput change handler
+  // in your home.js which reads the file and applies it as the background.
+  document.addEventListener('DOMContentLoaded', function () {
+    const uploadBtn = document.getElementById('bgImageUploadBtn');
+    const fileInput = document.getElementById('bgImageInput');
+    const nameSpan = document.getElementById('bgImageName');
+
+    if (uploadBtn && fileInput) {
+      uploadBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function () {
+        const f = fileInput.files && fileInput.files[0];
+        if (nameSpan) nameSpan.textContent = f ? f.name : '';
+        // Note: your existing home.js already listens for changes on #bgImageInput and
+        // will save/apply the background. No additional action required here.
+      });
+    }
+  });
+  </script>
+
+  <script src="{% static 'js/home.js' %}" defer></script>
+</body>
+</html>

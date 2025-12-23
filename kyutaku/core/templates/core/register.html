@@ -1,0 +1,184 @@
+
+{% load static %}
+
+{% block content %}
+<style>
+  :root {
+    --bp-black: #111111;
+    --bp-dark-gray: #1a1a1a;
+    --bp-pink: #f4a7bb;
+    --bp-hot-pink: #ff1493;
+    --text-light: #ffffff;
+    --text-dim: #a0a0a0;
+    --border-color: #333333;
+  }
+
+  body {
+    background-color: var(--bp-black);
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-color: var(--bp-black);
+  }
+
+  .form-card {
+    background: var(--bp-dark-gray);
+    padding: 2.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 450px;
+  }
+
+  .form-card h1 {
+    font-size: 1.8rem;
+    color: var(--bp-pink);
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .input-group {
+    margin-bottom: 1rem;
+  }
+
+  /* Universal styling for inputs and selects */
+  input, select {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: #000;
+    border: 1px solid var(--border-color);
+    border-radius: 0;
+    font-size: 0.9rem;
+    color: white;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  /* Specific fix for date and select appearance */
+  input[type="date"], select {
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--bp-pink);
+    box-shadow: 0 0 8px rgba(244, 167, 187, 0.2);
+    color: white;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background-color: var(--bp-pink);
+    color: #000;
+    border: none;
+    border-radius: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+  }
+
+  .btn:hover {
+    background-color: #ffffff;
+    transform: translateY(-2px);
+  }
+
+  .footer-text {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .link {
+    color: var(--bp-pink);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .link:hover {
+    color: white;
+    text-decoration: underline;
+  }
+
+  /* Label style for specific fields like Birthday */
+  .field-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--bp-pink);
+    margin-bottom: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+</style>
+
+<div class="page-container">
+  <div class="form-card">
+    <h1>REGISTER ACCOUNT 🎀</h1>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      
+      <input name="username" type="text" placeholder="USERNAME" required />
+      <input name="password" type="password" placeholder="PASSWORD" required />
+      
+      <div style="border-top: 1px solid #333; margin: 20px 0;"></div>
+
+      <input name="full_name" placeholder="FULL NAME" />
+      
+      <div style="display: flex; gap: 10px;">
+        <input name="age" type="number" placeholder="AGE" style="flex: 1;" />
+        <div style="flex: 2;">
+            <span class="field-label">Birthday</span>
+            <input name="birthday" type="date" />
+        </div>
+      </div>
+
+      <select name="gender">
+        <option value="">SELECT GENDER</option>
+        <option>MALE</option>
+        <option>FEMALE</option>
+        <option>NON-BINARY</option>
+      </select>
+
+      <input name="location" placeholder="LOCATION" />
+      <input name="favorites" placeholder="FAVORITES" />
+
+      <select name="life_status">
+        <option value="">LIFE STATUS</option>
+        <option>ELEMENTARY</option>
+        <option>HIGH SCHOOL</option>
+        <option>COLLEGE</option>
+        <option>WORKING</option>
+        <option>TAMBAY</option>
+      </select>
+
+      <button type="submit" class="btn">Register</button>
+    </form>
+
+    <p class="footer-text">
+      ALREADY HAVE ACCOUNT? 
+      <a href="{% url 'login' %}" class="link">LOGIN</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
